@@ -4,11 +4,63 @@ import x10.util.HashMap;
 import x10.array.*;
 
 public class SW {
+  public static def readSeq(fileName:String):String {
+    val file = new File(fileName);
+    if(file.exists()) {
+      val reader = file.openRead();
+      var lineNum:Int = 0 as Int;
+      var seq:String = new String();
+      seq = "-";
+
+      for(line in reader.lines()){
+        //Skip the first line
+        if(lineNum != 0 as Int) {
+          seq = seq + line;
+        }
+        lineNum = lineNum + (1 as Int);
+      }
+      return seq;
+    } else {
+      return "";
+    }
+  }
+
   public static def main(args:Rail[String]) {
+    // ./sw s1.1 s2.1 BLOSUM62 10 5
+    if (args.size < 5) {
+      Console.OUT.println("Usage: not enough arguments");
+      return;
+    }
+
+    val seqFile1 = args(0);
+    val seqFile2 = args(1);
+    val matchFile = args(2);
+    val opening = args(3);
+    val extension = args(4);
+
+    var seq1:String = readSeq(seqFile1);
+    var seq2:String = readSeq(seqFile2);
+    val len1 = seq1.length() - 1;
+    val len2 = seq2.length() - 1;
+    //Console.OUT.println(seq1);
+    //Console.OUT.println(seq2);
+
+    // Create a matrix of length m+1 x n+1 initialized to 0s.
+    val matrix = new Array_2[Long](len1+1,len2+1);
+
+    // Print out the matrix.
+    Console.OUT.println("  " + seq1);
+    for (row in 0..len2) {
+      var rowStr:String = new String();
+      rowStr = seq2.charAt(row as Int).toString() + " ";
+      for (col in 0..len1) {
+        rowStr = rowStr + matrix(col,0);
+      }
+      Console.OUT.println(rowStr);
+    }
 
     val alphabet_to_index = new HashMap[Char, Int]();
-    val f_name="BLOSUM62";
-    val file=new File(f_name);
+    val file=new File(matchFile);
     if(file.exists()) {
         val reader = file.openRead();
 
