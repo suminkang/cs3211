@@ -25,6 +25,19 @@ public class SW {
     }
   }
 
+  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Long]) {
+    // Print out the matrix.
+    Console.OUT.println("  " + seq1);
+    for (row in 0..len2) {
+      var rowStr:String = new String();
+      rowStr = seq2.charAt(row as Int).toString() + " ";
+      for (col in 0..len1) {
+        rowStr = rowStr + matrix(col,0);
+      }
+      Console.OUT.println(rowStr);
+    }
+  }
+
   public static def main(args:Rail[String]) {
     // ./sw s1.1 s2.1 BLOSUM62 10 5
     if (args.size < 5) {
@@ -47,17 +60,7 @@ public class SW {
 
     // Create a matrix of length m+1 x n+1 initialized to 0s.
     val matrix = new Array_2[Long](len1+1,len2+1);
-
-    // Print out the matrix.
-    Console.OUT.println("  " + seq1);
-    for (row in 0..len2) {
-      var rowStr:String = new String();
-      rowStr = seq2.charAt(row as Int).toString() + " ";
-      for (col in 0..len1) {
-        rowStr = rowStr + matrix(col,0);
-      }
-      Console.OUT.println(rowStr);
-    }
+    // printMatrix(seq1, seq2, len1, len2, matrix);
 
     val alphabet_to_index = new HashMap[Char, Int]();
     val file=new File(matchFile);
