@@ -6,10 +6,11 @@ import x10.array.*;
 public class SW {
   public static def readSeq(fileName:String):String {
     val file = new File(fileName);
+    var seq:String = new String();
+
     if(file.exists()) {
       val reader = file.openRead();
       var lineNum:Int = 0 as Int;
-      var seq:String = new String();
       seq = "-";
 
       for(line in reader.lines()){
@@ -19,10 +20,9 @@ public class SW {
         }
         lineNum = lineNum + (1 as Int);
       }
-      return seq;
-    } else {
-      return "";
+      reader.close();
     }
+    return seq;
   }
 
   public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
@@ -55,8 +55,8 @@ public class SW {
     var seq2:String = readSeq(seqFile2);
     val len1 = seq1.length() - 1;
     val len2 = seq2.length() - 1;
-    //Console.OUT.println(seq1);
-    //Console.OUT.println(seq2);
+    // Console.OUT.println("seq1: " + seq1);
+    // Console.OUT.println("seq2: " + seq2);
 
     // Create a matrix of length m+1 x n+1 initialized to 0s.
     var matrix:Array_2[Int] = new Array_2[Int](len1+1,len2+1);
@@ -73,7 +73,7 @@ public class SW {
         var sim_score_matrix:Array_2[Int] = new Array_2[Int](1 as Int,1 as Int);
         var first_line:String = new String();
         var lineNum:Int = 0 as Int;
-        for(s in reader.lines()){
+        for(s in reader.lines()) {
           // For the first line, create hashmap where keys are letters and values are their indeces.
           if(lineNum == 0 as Int) {
             first_line = s;
@@ -102,7 +102,7 @@ public class SW {
         }
 
         // Example print array
-        // Console.OUT.println(sim_score_matrix(0 as Int, 0 as Int));
+        // Console.OUT.println(sim_score_matrix.toString());
 
         printMatrix(seq1, seq2, len1, len2, buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, alphabet_to_index, sim_score_matrix, opening, extension));
         reader.close();
