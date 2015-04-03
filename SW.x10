@@ -2,6 +2,7 @@ import x10.io.Console;
 import x10.io.File;
 import x10.util.HashMap;
 import x10.array.*;
+import x10.util.Stack;
 
 public class SW {
   public static def readSeq(fileName:String):String {
@@ -109,7 +110,7 @@ public class SW {
       buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, alphabet_to_index, sim_score_matrix, opening, extension);
       printMatrix(seq1, seq2, len1, len2, matrix);
 
-      //backtrack(seq1, seq2, len1, len2, matrix);
+      backtrack(seq1, seq2, len1, len2, matrix);
     }
   }
 
@@ -163,42 +164,60 @@ public class SW {
     }
   }
 
-  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Long]) {
-    // Backtracking algorithm
-    // you have matrix that has values
-    // go from matrix(len1, len2) backwards
-    // look at values (i-1, j), (i, j-1), (i-1, j-1) and take the max
+  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
     var i:Long = len1;
     var j:Long = len2;
-    var stack:Rail[Long] = new Rail[Long]();
-    var stackIndex:Long = 0;
+    var actions:Stack[Long] = new Stack[Long]();
 
-    while (i != 0 && j != 0) {
+    while (i != 1 && j != 1) {
       var diag:Long = matrix(i-1,j-1);
       var left:Long = matrix(i-1,j);
       var up:Long = matrix(i,j-1);
+      //Console.OUT.println("diag,left,up: " + diag + "," + left + "," + up);
 
       if (diag >= left && diag >= up) {
         // align
         i--;
         j--;
-        stack(stackIndex) = 1;
-      } else if (left > diag && left >= up) {
-        // insert - in sequence 2
-        i--;
-        stack(stackIndex) = 2;
+        actions.push(0);
       } else if (up > diag && up > left) {
         // delete (insert - in sequence 1)
         j--;
-        stack(stackIndex) = 3;
+        actions.push(1);
+      } else if (left > diag && left >= up) {
+        // insert - in sequence 2
+        i--;
+        actions.push(2);
       }
-      stackIndex++;
     }
 
-    /*
-    Console.OUT.println("stackIndex: " + stackIndex);
     var align1:String = new String();
     var align2:String = new String();
-    */
+    var s1Index:Int = 1 as Int;
+    var s2Index:Int = 1 as Int;
+
+    while(!actions.isEmpty()) {
+      var action:Long = actions.pop();
+      //Console.OUT.println("ACTION: " + action);
+      if (action == 0) {
+        align1 = align1 + seq1.charAt(s1Index).toString();
+        align2 = align2 + seq2.charAt(s2Index).toString();
+        s1Index++;
+        s2Index++;
+      } else if (action == 1) {
+        align1 = align1 + "-";
+        align2 = align2 + seq2.charAt(s2Index).toString();
+        s2Index++;
+      } else if (action == 2) {
+        align1 = align1 + seq1.charAt(s1Index).toString();
+        align2 = align2 + "-";
+        s1Index++;
+      }
+    }
+    align1 = align1 + seq1.charAt(s1Index).toString();
+    align2 = align2 + seq2.charAt(s2Index).toString();
+
+    Console.OUT.println("align1: " + align1);
+    Console.OUT.println("align2: " + align2);
   }
 }
