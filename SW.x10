@@ -108,6 +108,8 @@ public class SW {
       // Console.OUT.println(sim_score_matrix.toString());
       buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, alphabet_to_index, sim_score_matrix, opening, extension);
       printMatrix(seq1, seq2, len1, len2, matrix);
+
+      //backtrack(seq1, seq2, len1, len2, matrix);
     }
   }
 
@@ -159,5 +161,44 @@ public class SW {
           gap = gap + (1 as Int);
       }
     }
+  }
+
+  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Long]) {
+    // Backtracking algorithm
+    // you have matrix that has values
+    // go from matrix(len1, len2) backwards
+    // look at values (i-1, j), (i, j-1), (i-1, j-1) and take the max
+    var i:Long = len1;
+    var j:Long = len2;
+    var stack:Rail[Long] = new Rail[Long]();
+    var stackIndex:Long = 0;
+
+    while (i != 0 && j != 0) {
+      var diag:Long = matrix(i-1,j-1);
+      var left:Long = matrix(i-1,j);
+      var up:Long = matrix(i,j-1);
+
+      if (diag >= left && diag >= up) {
+        // align
+        i--;
+        j--;
+        stack(stackIndex) = 1;
+      } else if (left > diag && left >= up) {
+        // insert - in sequence 2
+        i--;
+        stack(stackIndex) = 2;
+      } else if (up > diag && up > left) {
+        // delete (insert - in sequence 1)
+        j--;
+        stack(stackIndex) = 3;
+      }
+      stackIndex++;
+    }
+
+    /*
+    Console.OUT.println("stackIndex: " + stackIndex);
+    var align1:String = new String();
+    var align2:String = new String();
+    */
   }
 }
