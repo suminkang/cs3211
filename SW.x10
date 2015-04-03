@@ -13,11 +13,9 @@ public class SW {
       var lineNum:Int = 0 as Int;
       seq = "-";
 
+      reader.readLine(); //Skip the first line
       for(line in reader.lines()){
-        //Skip the first line
-        if(lineNum != 0 as Int) {
-          seq = seq + line;
-        }
+        seq = seq + line;
         lineNum = lineNum + (1 as Int);
       }
       reader.close();
@@ -65,47 +63,51 @@ public class SW {
     val alphabet_to_index = new HashMap[Char, Int]();
     val file=new File(matchFile);
     if(file.exists()) {
-        val reader = file.openRead();
+      val reader = file.openRead();
 
-        // Example fill
-        // sim_score_matrix.fill(5 as Int);
+      // Read in just the first line
+      var first_line:String = reader.readLine().trim();
+      val elements = first_line.split("  ");
+      val size:Long = elements.size;
 
-        var sim_score_matrix:Array_2[Int] = new Array_2[Int](1 as Int,1 as Int);
-        var first_line:String = new String();
-        var lineNum:Int = 0 as Int;
-        for(s in reader.lines()) {
-          // For the first line, create hashmap where keys are letters and values are their indeces.
-          if(lineNum == 0 as Int) {
-            first_line = s;
-            sim_score_matrix = new Array_2[Int](first_line.length() / (3 as Int), first_line.length() / (3 as Int));
-            for (var n:Int = 3 as Int; n <= first_line.length(); n = n + (3 as Int)) {
-              alphabet_to_index.put(first_line.charAt(n), n/(3 as Int));
-            }
+      for (i in 0..(size-1)) {
+        // Console.OUT.println(i + ": " + elements(i));
+        alphabet_to_index.put(elements(i).charAt(0 as Int), i as Int);
+      }
+      // Example get on HashMap
+      //Console.OUT.println(alphabet_to_index.containsKey('O'));
+      //Console.OUT.println(alphabet_to_index.get('O'));
+      //Console.OUT.println(alphabet_to_index.get('X'));
 
-            // Example get on HashMap
-            // Console.OUT.println(alphabet_to_index.get('K'));
-            lineNum = lineNum + (1 as Int);
+      // Create a 2D matrix of the size of the characters.
+      // Example fill: sim_score_matrix.fill(5 as Int);
+      var sim_score_matrix:Array_2[Int] = new Array_2[Int](size as Int,size as Int);
+
+      // For the rest of the lines, split by spaces,
+      // ignore the first character and add the rest to the matrix.
+      var lineNum:Long = 0;
+      for(s in reader.lines()) {
+        val split_line = s.split(" ");
+        val s_size:Long = split_line.size;
+        var colNum:Long = 0;
+
+        for (i in 0..(s_size-1)) {
+          try {
+            sim_score_matrix(lineNum, colNum) = Int.parse(split_line(i), 10 as Int);
+            // Console.OUT.println("(" + lineNum + "," + colNum + "): " + split_line(i));
+            colNum++;
+          }
+          catch (e:x10.lang.Exception) {
             continue;
           }
-
-          // For the rest of the lines, split by spaces, ignore the first character and add the rest to the matrix.
-          val split_line = s.split(" ");
-          for (var n:Int = 1 as Int; n <= split_line.size; n = n + (1 as Int)) {
-            try {
-              sim_score_matrix(lineNum - 1, n-1) = Int.parse(split_line(n), 10 as Int);
-            }
-            catch (e:x10.lang.Exception) {
-              continue;
-            }
-          }
-          lineNum = lineNum + (1 as Int);
         }
+        lineNum++;
+      }
+      reader.close();
 
-        // Example print array
-        // Console.OUT.println(sim_score_matrix.toString());
-
-        printMatrix(seq1, seq2, len1, len2, buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, alphabet_to_index, sim_score_matrix, opening, extension));
-        reader.close();
+      // Console.OUT.println(sim_score_matrix.toString());
+      buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, alphabet_to_index, sim_score_matrix, opening, extension);
+      printMatrix(seq1, seq2, len1, len2, matrix);
     }
   }
 
@@ -113,41 +115,49 @@ public class SW {
     return open + (length * extend);
   }
 
-  public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int):Array_2[Int] {
+  public static def getCharacterIndex(c:Char, alphabet_to_index:HashMap[Char, Int]):Long {
+    if (alphabet_to_index.containsKey(c)) {
+      return alphabet_to_index.get(c);
+    }
+    return alphabet_to_index.get('*');
+  }
+
+  public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int) {
     var max:Int = 0 as Int;
     var gap:Int = 0 as Int;
-    for (var x:Int = 1 as Int; x <= width; x = x + (1 as Int)) {
-      for (var y:Int = 1 as Int; y <= height; y = y + (1 as Int)) {
+    for (y in 1..height) {
+      for (x in 1..width) {
         max = 0 as Int;
 
         // Top Left
-        val xCharacterIndex = alphabet_to_index.get(seq1.charAt(x)) - 1;
-        val yCharacterIndex = alphabet_to_index.get(seq2.charAt(y)) - 1;
+        val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
+        val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
+        //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "): (" + xCharacterIndex + "," + yCharacterIndex + ")");
+
         val topLeft:Int = matrix(x-1, y-1) + sim_score_matrix(xCharacterIndex, yCharacterIndex);
+        //Console.OUT.println("topLeft: " + topLeft);
         if(max < topLeft)
           max = topLeft;
 
         // Left
-        val left:Int = matrix(x-1, y) + affineGap(open, extend, gap);
-        Console.OUT.println("left " + left);
+        val left:Int = matrix(x-1, y) - affineGap(open, extend, gap);
+        //Console.OUT.println("left " + left);
         if(max < left)
           max = left;
 
         // Top
-        val top:Int = matrix(x, y-1) + affineGap(open, extend, gap);
-        Console.OUT.println("top " + top);
+        val top:Int = matrix(x, y-1) - affineGap(open, extend, gap);
+        //Console.OUT.println("top " + top);
         if(max < top)
           max = top;
 
         matrix(x,y) = max;
 
-        if(seq1.charAt(x).equals(seq2.charAt(y)))
+        if(seq1.charAt(x as Int).equals(seq2.charAt(y as Int)))
           gap = 0 as Int;
         else
           gap = gap + (1 as Int);
-
       }
     }
-    return matrix;
   }
 }
