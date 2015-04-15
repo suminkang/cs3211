@@ -24,7 +24,7 @@ public class SW {
     return seq;
   }
 
-  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
+  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Double]) {
     // Print out the matrix.
     Console.OUT.println("  " + seq1);
     for (row in 0..len2) {
@@ -47,8 +47,8 @@ public class SW {
     val seqFile1 = args(0);
     val seqFile2 = args(1);
     val matchFile = args(2);
-    val opening = Int.parse(args(3), 10 as Int);
-    val extension = Int.parse(args(4), 10 as Int);
+    val opening = Double.parse(args(3));
+    val extension = Double.parse(args(4));
 
     var seq1:String = readSeq(seqFile1);
     var seq2:String = readSeq(seqFile2);
@@ -58,7 +58,7 @@ public class SW {
     // Console.OUT.println("seq2: " + seq2);
 
     // Create a matrix of length m+1 x n+1 initialized to 0s.
-    var matrix:Array_2[Int] = new Array_2[Int](len1+1,len2+1);
+    var matrix:Array_2[Double] = new Array_2[Double](len1+1,len2+1);
     // printMatrix(seq1, seq2, len1, len2, matrix);
 
     val alphabet_to_index = new HashMap[Char, Int]();
@@ -114,7 +114,7 @@ public class SW {
     }
   }
 
-  public static def affineGap(open:Int, extend:Int, length:Int):Int {
+  public static def affineGap(open:Double, extend:Double, length:Int):Double {
     return open + (length * extend);
   }
 
@@ -125,31 +125,31 @@ public class SW {
     return alphabet_to_index.get('*');
   }
 
-  public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int) {
-    var max:Int = 0 as Int;
+  public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Double], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Double, extend:Double) {
+    var max:Double = 0;
     var gap:Int = 0 as Int;
     for (y in 1..height) {
       for (x in 1..width) {
-        max = 0 as Int;
+        max = 0;
 
         // Top Left
         val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
         val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
         //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "): (" + xCharacterIndex + "," + yCharacterIndex + ")");
 
-        val topLeft:Int = matrix(x-1, y-1) + sim_score_matrix(xCharacterIndex, yCharacterIndex);
+        val topLeft:Double = matrix(x-1, y-1) + sim_score_matrix(xCharacterIndex, yCharacterIndex);
         //Console.OUT.println("topLeft: " + topLeft);
         if(max < topLeft)
           max = topLeft;
 
         // Left
-        val left:Int = matrix(x-1, y) - affineGap(open, extend, gap);
+        val left:Double = matrix(x-1, y) - affineGap(open, extend, gap);
         //Console.OUT.println("left " + left);
         if(max < left)
           max = left;
 
         // Top
-        val top:Int = matrix(x, y-1) - affineGap(open, extend, gap);
+        val top:Double = matrix(x, y-1) - affineGap(open, extend, gap);
         //Console.OUT.println("top " + top);
         if(max < top)
           max = top;
@@ -164,15 +164,15 @@ public class SW {
     }
   }
 
-  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
+  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Double]) {
     var i:Long = len1;
     var j:Long = len2;
     var actions:Stack[Long] = new Stack[Long]();
 
     while (i != 1 && j != 1) {
-      var diag:Long = matrix(i-1,j-1);
-      var left:Long = matrix(i-1,j);
-      var up:Long = matrix(i,j-1);
+      var diag:Double = matrix(i-1,j-1);
+      var left:Double = matrix(i-1,j);
+      var up:Double = matrix(i,j-1);
       //Console.OUT.println("diag,left,up: " + diag + "," + left + "," + up);
 
       if (diag >= left && diag >= up) {
