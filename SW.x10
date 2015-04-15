@@ -129,6 +129,7 @@ public class SW {
     var max:Double = 0;
     var gap:Int = 0 as Int;
     for (y in 1..height) {
+      gap=0 as Int;
       for (x in 1..width) {
         max = 0;
 
@@ -167,9 +168,10 @@ public class SW {
   public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Double]) {
     var i:Long = len1;
     var j:Long = len2;
+    //Console.OUT.println("LENGTH i, j: " + i + ", " + j);
     var actions:Stack[Long] = new Stack[Long]();
 
-    while (i != 1 && j != 1) {
+    while (i != 0 && j != 0) {
       var diag:Double = matrix(i-1,j-1);
       var left:Double = matrix(i-1,j);
       var up:Double = matrix(i,j-1);
@@ -193,12 +195,13 @@ public class SW {
 
     var align1:String = new String();
     var align2:String = new String();
+
+    // Start at index 1 since '-' is the first character for both strings
     var s1Index:Int = 1 as Int;
     var s2Index:Int = 1 as Int;
 
     while(!actions.isEmpty()) {
       var action:Long = actions.pop();
-      //Console.OUT.println("ACTION: " + action);
       if (action == 0) {
         align1 = align1 + seq1.charAt(s1Index).toString();
         align2 = align2 + seq2.charAt(s2Index).toString();
@@ -214,8 +217,6 @@ public class SW {
         s1Index++;
       }
     }
-    align1 = align1 + seq1.charAt(s1Index).toString();
-    align2 = align2 + seq2.charAt(s2Index).toString();
 
     Console.OUT.println("align1: " + align1);
     Console.OUT.println("align2: " + align2);
