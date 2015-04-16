@@ -195,20 +195,22 @@ public class SW_par {
         for (elem_p in diag) async {
           var x:Int = elem_p.first + 1 as Int;
           var y:Int = elem_p.second + 1 as Int;
-          max = 0 as Int;
+          if(x + (1 as Int) <= seq1.length() && x + (1 as Int) <= seq2.length() && y + (1 as Int) <= seq1.length() && y + (1 as Int) <= seq2.length()) {
+            max = 0 as Int;
 
-          // Top Left
-          val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
-          val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
-          val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
-          //Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
-              //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
+            // Top Left
+            val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
+            val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
+            val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
+            //Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
+                //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
 
-          mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
-          mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
-          mat_J(x, y) = Math.max(mat_M(x, y-1) - open, mat_J(x, y-1) - extend);
-          
-          matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
+            mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
+            mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
+            mat_J(x, y) = Math.max(mat_M(x, y-1) - open, mat_J(x, y-1) - extend);
+            
+            matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
+          }
         }
       }
     }
