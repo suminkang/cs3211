@@ -82,16 +82,19 @@ class Synthetic;
 
 class SW_par_Strings {
   public:
-    static ::x10::lang::String sl__4311;
-    static ::x10::lang::String sl__4312;
-    static ::x10::lang::String sl__4314;
-    static ::x10::lang::String sl__4315;
-    static ::x10::lang::String sl__4316;
-    static ::x10::lang::String sl__4317;
-    static ::x10::lang::String sl__4313;
-    static ::x10::lang::String sl__4318;
-    static ::x10::lang::String sl__4310;
-    static ::x10::lang::String sl__4319;
+    static ::x10::lang::String sl__4603;
+    static ::x10::lang::String sl__4604;
+    static ::x10::lang::String sl__4605;
+    static ::x10::lang::String sl__4611;
+    static ::x10::lang::String sl__4602;
+    static ::x10::lang::String sl__4606;
+    static ::x10::lang::String sl__4607;
+    static ::x10::lang::String sl__4608;
+    static ::x10::lang::String sl__4609;
+    static ::x10::lang::String sl__4613;
+    static ::x10::lang::String sl__4614;
+    static ::x10::lang::String sl__4612;
+    static ::x10::lang::String sl__4610;
 };
 
 class SW_par : public ::x10::lang::X10Class   {
