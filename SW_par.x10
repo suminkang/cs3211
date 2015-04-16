@@ -4,6 +4,7 @@ import x10.util.HashMap;
 import x10.array.*;
 import x10.util.Stack;
 import x10.util.Pair;
+import x10.util.ArrayList;
 
 public class SW_par {
   public static def readSeq(fileName:String):String {
@@ -165,6 +166,7 @@ public class SW_par {
 	//var open2:Int = 1 as Int;
 	//var extend2:Int = 1 as Int;
 	
+/*
     for (y in 1..height) {
       for (x in 1..width) {
         max = 0 as Int;
@@ -174,7 +176,7 @@ public class SW_par {
         val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
 		val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
 		//Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
-        //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "): (" + xCharacterIndex + "," + yCharacterIndex + ")");
+        //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
 
 		mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
 		mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
@@ -183,6 +185,60 @@ public class SW_par {
 		matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
       }
     }
+*/
+
+    var diagonals:Int = height + width - 1 as Int;
+    for (d in 0..(diagonals-1)) {
+      var diag:ArrayList[Pair[Int, Int]] = generateDiagonal(d as Int, height, width);
+      Console.OUT.println(diag);
+      
+      finish {
+        for (elem_p in diag) async {
+          var x:Int = elem_p.first + 1 as Int;
+          var y:Int = elem_p.second + 1 as Int;
+          max = 0 as Int;
+
+          // Top Left
+          val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
+          val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
+          val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
+          //Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
+              //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
+
+          mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
+          mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
+          mat_J(x, y) = Math.max(mat_M(x, y-1) - open, mat_J(x, y-1) - extend);
+          
+          matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
+        }
+      }
+    }
+
+  }
+
+public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[Pair[Int, Int]] {
+    var elements:ArrayList[Pair[Int, Int]] = new ArrayList[Pair[Int, Int]]();
+  val numDiags:Int = height + width - (1 as Int);
+    
+    if(diag < Math.min(height, width)) {
+      Console.OUT.println("1");
+      for (i in 0..diag)
+        elements.add(new Pair[Int,Int]((diag - i) as Int, i as Int));
+    } else if(diag >= Math.max(height, width)) {
+      Console.OUT.println("2");
+      for(i in 0..(numDiags - diag - 1))
+        elements.add(new Pair[Int, Int]((height - 1 - i) as Int, (i + diag + 1 - height) as Int));
+    } else if(diag >= width && diag < height) {
+      Console.OUT.println("3");
+      for (i in 0..(width - 1))
+        elements.add(new Pair[Int,Int]((diag - i) as Int, i as Int));
+    } else if(diag < height && diag >= width) {
+      Console.OUT.println("4");
+      for(i in 0..(height - 1))
+        elements.add(new Pair[Int, Int]((height - 1 - i) as Int, (i + diag + 1 - height) as Int));
+    }
+    
+  return elements;
   }
 
   public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
