@@ -139,7 +139,6 @@ public class SW_par {
 		mat_M(i, 0) = -1000000 as Int;
 	for (j in 1..height)
 		mat_M(0, j) = -1000000 as Int;
-	printMatrix(seq1, seq2, width as Long, height as Long, mat_M);
 	
 	var mat_I:Array_2[Int] = new Array_2[Int](width+1,height+1);
 	mat_I(0,0) = -1000000 as Int;
@@ -188,45 +187,45 @@ public class SW_par {
   public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
     var i:Long = len1;
     var j:Long = len2;
-    //Console.OUT.println("LENGTH i, j: " + i + ", " + j);
+    var maxScore:Int = matrix(len1, len2);
     var actions:Stack[Long] = new Stack[Long]();
 
     while (i != 0 || j != 0) {
       if (i == 0) {
-        // delete (insert - in sequence 1)
         j--;
         actions.push(1);
         continue;
-        //Console.OUT.println("(" + i + "," + j + ")" + " = go up");
       } else if (j == 0) {
-        // insert - in sequence 2
         i--;
         actions.push(2);
         continue;
-        //Console.OUT.println("(" + i + "," + j + ")" + " = go left");
       }
 
       var diag:Int = matrix(i-1,j-1);
       var left:Int = matrix(i-1,j);
       var up:Int = matrix(i,j-1);
-      //Console.OUT.println("diag,left,up: " + diag + "," + left + "," + up);
+      var tmpMax:Int = 0 as Int;
 
       if (diag >= left && diag >= up) {
         // align
         i--;
         j--;
         actions.push(0);
-        //Console.OUT.println("(" + i + "," + j + ")" + " = go diag");
+        tmpMax = diag;
       } else if (up > diag && up > left) {
         // delete (insert - in sequence 1)
         j--;
         actions.push(1);
-        //Console.OUT.println("(" + i + "," + j + ")" + " = go up");
+        tmpMax = up;
       } else if (left > diag && left >= up) {
         // insert - in sequence 2
         i--;
         actions.push(2);
-        //Console.OUT.println("(" + i + "," + j + ")" + " = go left");
+        tmpMax = left;
+      }
+
+      if (maxScore < tmpMax) {
+        maxScore = tmpMax;
       }
     }
 
@@ -236,27 +235,46 @@ public class SW_par {
     // Start at index 1 since '-' is the first character for both strings
     var s1Index:Int = 1 as Int;
     var s2Index:Int = 1 as Int;
+    var numGaps:Long = 0;
+    var numMatches:Long = 0;
 
     while(!actions.isEmpty()) {
       var action:Long = actions.pop();
       //Console.OUT.println("ACTION: " + action);
       if (action == 0) {
-        align1 = align1 + seq1.charAt(s1Index).toString();
-        align2 = align2 + seq2.charAt(s2Index).toString();
+        // Check for matches
+        var s1char:Char = seq1.charAt(s1Index);
+        var s2char:Char = seq2.charAt(s2Index);
+
+        if (s1char == s2char) {
+          numMatches++;
+        }
+
+        align1 = align1 + s1char.toString();
+        align2 = align2 + s2char.toString();
         s1Index++;
         s2Index++;
       } else if (action == 1) {
         align1 = align1 + "-";
         align2 = align2 + seq2.charAt(s2Index).toString();
         s2Index++;
+        numGaps++;
       } else if (action == 2) {
         align1 = align1 + seq1.charAt(s1Index).toString();
         align2 = align2 + "-";
         s1Index++;
+        numGaps++;
       }
     }
 
-    Console.OUT.println("align1: " + align1);
-    Console.OUT.println("align2: " + align2);
+    var maxLen:Long = align1.length();
+    var identity:Double = (numMatches/maxLen as Double) * 100;
+    var gap:Double = (numGaps/maxLen as Double) * 100;
+
+    Console.OUT.printf("Identity: %d/%d (%.2f%%)\n", numMatches, maxLen, identity);
+    Console.OUT.printf("Gaps: %d/%d (%.2f%%)\n", numGaps, maxLen, gap);
+    Console.OUT.println("Score: " + maxScore);
+    Console.OUT.println("1: " + align1);
+    Console.OUT.println("2: " + align2);
   }
 }
