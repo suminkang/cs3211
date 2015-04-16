@@ -171,7 +171,21 @@ public class SW {
     //Console.OUT.println("LENGTH i, j: " + i + ", " + j);
     var actions:Stack[Long] = new Stack[Long]();
 
-    while (i != 0 && j != 0) {
+    while (i != 0 || j != 0) {
+      if (i == 0) {
+        // delete (insert - in sequence 1)
+        j--;
+        actions.push(1);
+        continue;
+        //Console.OUT.println("(" + i + "," + j + ")" + " = go up");
+      } else if (j == 0) {
+        // insert - in sequence 2
+        i--;
+        actions.push(2);
+        continue;
+        //Console.OUT.println("(" + i + "," + j + ")" + " = go left");
+      }
+
       var diag:Double = matrix(i-1,j-1);
       var left:Double = matrix(i-1,j);
       var up:Double = matrix(i,j-1);
@@ -182,14 +196,17 @@ public class SW {
         i--;
         j--;
         actions.push(0);
+        //Console.OUT.println("(" + i + "," + j + ")" + " = go diag");
       } else if (up > diag && up > left) {
         // delete (insert - in sequence 1)
         j--;
         actions.push(1);
+        //Console.OUT.println("(" + i + "," + j + ")" + " = go up");
       } else if (left > diag && left >= up) {
         // insert - in sequence 2
         i--;
         actions.push(2);
+        //Console.OUT.println("(" + i + "," + j + ")" + " = go left");
       }
     }
 
@@ -202,6 +219,7 @@ public class SW {
 
     while(!actions.isEmpty()) {
       var action:Long = actions.pop();
+      //Console.OUT.println("ACTION: " + action);
       if (action == 0) {
         align1 = align1 + seq1.charAt(s1Index).toString();
         align2 = align2 + seq2.charAt(s2Index).toString();
