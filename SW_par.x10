@@ -189,24 +189,19 @@ public class SW_par {
           // Start maximum number of threads with work divided evenly among them.
           amount = diag.size() as Int / MAX_THREADS;
         }
-          
-        var z:Int = 0 as Int;
+
         var b:Int = ((diag.size() as Int) / amount);
-        
         finish for(g in 0..(b-1)) {
-          if (z == 0 as Int) {
-            if(diag.size() - index < amount * (2 as Int)) { 
-              // If there's less than twice the normal amount of work left, have this 
-              // thread pick it all up.
-              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, 
-                open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, 
-                (diag.size() as Int - g*amount) as Int);
-              z = 1 as Int;
-            }
-            else { // Normal case
-              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, 
-                open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, amount);
-            }
+          if(diag.size() - (g * amount) < amount * (2 as Int)) {
+            // If there's less than twice the normal amount of work left, have this
+            // thread pick it all up.
+            async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix,
+              open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int,
+              (diag.size() as Int - g*amount) as Int);
+          } else {
+            // Normal case
+            async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix,
+              open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, amount);
           }
         }
       }
