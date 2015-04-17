@@ -129,6 +129,9 @@ public class SW_par {
   }
 
   public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int):Int {
+    val MAX_THREADS:Int = 8 as Int;
+    val MIN_WORK_PER_THREAD:Int = 10 as Int;
+    
     var mat_M:Array_2[Int] = new Array_2[Int](width+1,height+1);
     for (i in 1..width)
       mat_M(i, 0) = -1000000 as Int;
@@ -155,32 +158,33 @@ public class SW_par {
 
     var max:Int = 0 as Int;
     var diagonals:Int = height + width - 1 as Int;
+    var index:Int = 0 as Int;
+    var amount:Int;
     for (d in 0..(diagonals-1)) {
       var diag:ArrayList[Pair[Int, Int]] = generateDiagonal(d as Int, height, width);
-
-      finish {
-        for (elem_p in diag) async {
-          var y:Int = elem_p.first + 1 as Int;
-          var x:Int = elem_p.second + 1 as Int;
-          //Console.OUT.println("(" + x + "," + y + ")");
-
-          // Top Left
-          val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
-          val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
-          val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
-          //Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
-          //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
-
-          mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
-          mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
-          mat_J(x, y) = Math.max(mat_M(x, y-1) - open, mat_J(x, y-1) - extend);
-
-          matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
-          if (max < matrix(x,y)) {
-            max = matrix(x,y);
+      val num_potential_threads = diag.size() as Int / MIN_WORK_PER_THREAD;
+      if(num_potential_threads < 2) { // Special case: no threads.
+        computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, 0 as Int, diag.size() as Int);
+      } else {
+        if(num_potential_threads < MAX_THREADS) //Start potential amount of threads with minimum work each.
+          amount = MIN_WORK_PER_THREAD;
+        else //Start maximum number of threads with work divided evenly among them.
+          amount = diag.size() as Int / MAX_THREADS;
+          
+        finish {
+          while(index < diag.size()) {
+            if(diag.size() - index < amount * (2 as Int)) { //If there's less than twice the normal amount of work left, have this thread pick it all up.
+              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, index, diag.size() as Int - index);
+              break;
+            }
+            else //Normal case
+              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, index, amount);
+            index += amount;
           }
         }
+        
       }
+      
     }
     return max;
   }
@@ -188,10 +192,6 @@ public class SW_par {
 public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[Pair[Int, Int]] {
     var elements:ArrayList[Pair[Int, Int]] = new ArrayList[Pair[Int, Int]]();
     val numDiags:Int = height + width - (1 as Int);
-    // Console.OUT.println("NUM DIAGS: " + numDiags);
-    // Console.OUT.println("DIAG NO: " + diag);
-    // Console.OUT.println("WIDTH: " + width);
-    // Console.OUT.println("HEIGHT: " + height);
     
     if(diag < Math.min(height, width)) {
       // Console.OUT.println("1");
@@ -212,6 +212,34 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
         elements.add(new Pair[Int, Int]((height - 1 - i) as Int, (i + diag + 1 - height) as Int));
     }
     return elements;
+  }
+  
+  public static def computeDiagRange(seq1:String, seq2:String, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int,
+                                    matrix:Array_2[Int], mat_M:Array_2[Int], mat_I:Array_2[Int], mat_J:Array_2[Int],
+                                    diag:ArrayList[Pair[Int, Int]], start:Int, nelems:Int): Int {
+    for (i in start..(start + nelems - 1 as Int)) {
+      val elem_p:Pair[Int, Int] = diag.get(i);
+      val y:Int = elem_p.first + 1 as Int;
+      val x:Int = elem_p.second + 1 as Int;
+      //Console.OUT.println("(" + x + "," + y + ")");
+
+      // Top Left
+      val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
+      val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
+      val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
+      //Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
+      //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
+
+      mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
+      mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
+      mat_J(x, y) = Math.max(mat_M(x, y-1) - open, mat_J(x, y-1) - extend);
+
+      matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
+      /*if (max < matrix(x,y)) {
+        max = matrix(x,y);
+      }*/
+    }
+    return 0 as Int;
   }
 
   public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int], maxScore:Int) {
