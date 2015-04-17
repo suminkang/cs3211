@@ -182,31 +182,27 @@ public class SW_par {
         computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, 0 as Int, diag.size() as Int);
       } else {
         if(num_potential_threads < MAX_THREADS) {
-          //Start potential amount of threads with minimum work each.
+          // Start potential amount of threads with minimum work each.
           amount = MIN_WORK_PER_THREAD;
         } else {
-          //Start maximum number of threads with work divided evenly among them.
+          // Start maximum number of threads with work divided evenly among them.
           amount = diag.size() as Int / MAX_THREADS;
         }
           
         var z:Int = 0 as Int;
         var b:Int = ((diag.size() as Int) / amount);
-        //finish while(index < b) {
         
         finish for(g in 0..(b-1)) {
-          
           if (z == 0 as Int) {
             if(diag.size() - index < amount * (2 as Int)) { 
               // If there's less than twice the normal amount of work left, have this 
               // thread pick it all up.
               async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, (diag.size() as Int - g*amount) as Int);
-              //break;
               z = 1 as Int;
             }
-            else { //Normal case
+            else { // Normal case
               async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, amount);
             }
-            //async { index += amount; }
           }
         }
       }
@@ -348,7 +344,6 @@ public class SW_par {
     Console.OUT.println("Score: " + matrix(len1, len2));
     Console.OUT.println("1: " + align1);
     Console.OUT.println("2: " + align2);
-    //printMatrix(seq1, seq2, len1, len2, matrix);
   }
 
   /**
