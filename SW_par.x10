@@ -129,7 +129,7 @@ public class SW_par {
   }
 
   public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int):Int {
-    val MAX_THREADS:Int = 8 as Int;
+    val MAX_THREADS:Int = 4 as Int;
     val MIN_WORK_PER_THREAD:Int = 10 as Int;
     
     var mat_M:Array_2[Int] = new Array_2[Int](width+1,height+1);
@@ -159,7 +159,7 @@ public class SW_par {
     var max:Int = 0 as Int;
     var diagonals:Int = height + width - 1 as Int;
     var index:Int = 0 as Int;
-    var amount:Int;
+    var amount:Int = 0 as Int;
     for (d in 0..(diagonals-1)) {
       var diag:ArrayList[Pair[Int, Int]] = generateDiagonal(d as Int, height, width);
       val num_potential_threads = diag.size() as Int / MIN_WORK_PER_THREAD;
@@ -171,17 +171,28 @@ public class SW_par {
         else //Start maximum number of threads with work divided evenly among them.
           amount = diag.size() as Int / MAX_THREADS;
           
-        finish {
-          while(index < diag.size()) {
+          
+        var z:Int = 0 as Int;
+        var b:Int = ((diag.size() as Int) / amount);
+        //finish while(index < b) {
+        
+        finish for(g in 0..(b-1)) {
+          
+          if (z == 0 as Int) {
             if(diag.size() - index < amount * (2 as Int)) { //If there's less than twice the normal amount of work left, have this thread pick it all up.
-              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, index, diag.size() as Int - index);
-              break;
+              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, (diag.size() as Int - g*amount) as Int);
+              //break;
+              z = 1 as Int;
             }
-            else //Normal case
-              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, index, amount);
-            index += amount;
+            else { //Normal case
+              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, amount);
+            }
+            //async { index += amount; }
           }
         }
+
+        
+        
         
       }
       
@@ -216,8 +227,9 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
   
   public static def computeDiagRange(seq1:String, seq2:String, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int,
                                     matrix:Array_2[Int], mat_M:Array_2[Int], mat_I:Array_2[Int], mat_J:Array_2[Int],
-                                    diag:ArrayList[Pair[Int, Int]], start:Int, nelems:Int): Int {
+                                    diag:ArrayList[Pair[Int, Int]], start:Int, nelems:Int) {
     for (i in start..(start + nelems - 1 as Int)) {
+    //async {
       val elem_p:Pair[Int, Int] = diag.get(i);
       val y:Int = elem_p.first + 1 as Int;
       val x:Int = elem_p.second + 1 as Int;
@@ -238,8 +250,8 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
       /*if (max < matrix(x,y)) {
         max = matrix(x,y);
       }*/
+    //}
     }
-    return 0 as Int;
   }
 
   public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int], maxScore:Int) {
