@@ -114,8 +114,6 @@ public class SW_par {
       // Console.OUT.println(sim_score_matrix.toString());
       var maxScore:Int = buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, alphabet_to_index, sim_score_matrix, opening, extension);
       backtrack(seq1, seq2, len1, len2, matrix, maxScore);
-
-      //printMatrix(seq1, seq2, len1, len2, matrix);
     }
   }
 
@@ -149,21 +147,22 @@ public class SW_par {
   	var mat_J:Array_2[Int] = new Array_2[Int](width+1,height+1);
   	mat_J(0,0) = -1000000 as Int;
   	for (i in 1..width) {
-  		mat_I(i, 0) = -1000000 as Int;
-  		mat_I(i, 1) = -open;
+  		mat_J(i, 0) = -1000000 as Int;
+  		mat_J(i, 1) = -open;
   	}
   	for (j in 1..height)
-  		mat_I(0, j) = -affineGap(open, extend, (j - 1) as Int);
+  		mat_J(0, j) = -affineGap(open, extend, (j - 1) as Int);
 
     var max:Int = 0 as Int;
     var diagonals:Int = height + width - 1 as Int;
     for (d in 0..(diagonals-1)) {
       var diag:ArrayList[Pair[Int, Int]] = generateDiagonal(d as Int, height, width);
-      
+
       finish {
         for (elem_p in diag) async {
-          var x:Int = elem_p.first + 1 as Int;
-          var y:Int = elem_p.second + 1 as Int;
+          var y:Int = elem_p.first + 1 as Int;
+          var x:Int = elem_p.second + 1 as Int;
+          //Console.OUT.println("(" + x + "," + y + ")");
 
           // Top Left
           val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
@@ -202,15 +201,15 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
       // Console.OUT.println("2");
       var min:Int = Math.min(height, width);
       for(i in 0..(numDiags - diag - 1))
-        elements.add(new Pair[Int, Int]((min -1 - i) as Int, (i + diag + 1 - min) as Int));
-    } else if(diag < width && diag >= height) {
-      // Console.OUT.println("3");
-      for (i in 0..(height - 1))
-        elements.add(new Pair[Int,Int]((i + diag + 1 - height) as Int, (height -1 - i) as Int));
+        elements.add(new Pair[Int, Int]((height -1 - i) as Int, (i + diag + 1 - height) as Int));
     } else if(diag < height && diag >= width) {
+      // Console.OUT.println("3");
+      for (i in 0..(width - 1))
+        elements.add(new Pair[Int,Int]((diag - i) as Int, i as Int));
+    } else if(diag < width && diag >= height) {
       // Console.OUT.println("4");
-      for(i in 0..(width - 1))
-        elements.add(new Pair[Int, Int]((width - 1 - i) as Int, (i + diag + 1 - width) as Int));
+      for(i in 0..(height - 1))
+        elements.add(new Pair[Int, Int]((height - 1 - i) as Int, (i + diag + 1 - height) as Int));
     }
     return elements;
   }
