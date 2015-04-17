@@ -179,7 +179,8 @@ public class SW_par {
       val num_potential_threads = diag.size() as Int / MIN_WORK_PER_THREAD;
       if(num_potential_threads < 2) { 
         // Special case: no threads.
-        computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, 0 as Int, diag.size() as Int);
+        computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, 
+          matrix, mat_M, mat_I, mat_J, diag, 0 as Int, diag.size() as Int);
       } else {
         if(num_potential_threads < MAX_THREADS) {
           // Start potential amount of threads with minimum work each.
@@ -197,11 +198,14 @@ public class SW_par {
             if(diag.size() - index < amount * (2 as Int)) { 
               // If there's less than twice the normal amount of work left, have this 
               // thread pick it all up.
-              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, (diag.size() as Int - g*amount) as Int);
+              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, 
+                open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, 
+                (diag.size() as Int - g*amount) as Int);
               z = 1 as Int;
             }
             else { // Normal case
-              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, amount);
+              async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, 
+                open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, amount);
             }
           }
         }
@@ -237,9 +241,9 @@ public class SW_par {
   /**
    * Use the three matrices to compute the score at the current diagonal index.
    */
-  public static def computeDiagRange(seq1:String, seq2:String, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int,
-                                    matrix:Array_2[Int], mat_M:Array_2[Int], mat_I:Array_2[Int], mat_J:Array_2[Int],
-                                    diag:ArrayList[Pair[Int, Int]], start:Int, nelems:Int) {
+  public static def computeDiagRange(seq1:String, seq2:String, alphabet_to_index:HashMap[Char, Int],
+      sim_score_matrix:Array_2[Int], open:Int, extend:Int, matrix:Array_2[Int], mat_M:Array_2[Int], 
+      mat_I:Array_2[Int], mat_J:Array_2[Int], diag:ArrayList[Pair[Int, Int]], start:Int, nelems:Int) {
     for (i in start..(start + nelems - 1 as Int)) {
       val elem_p:Pair[Int, Int] = diag.get(i);
       val y:Int = elem_p.first + 1 as Int;
@@ -262,7 +266,8 @@ public class SW_par {
    * Finds the sequence alignment by traversing through the matrix from the bottom right, 
    * following the maximal values.
    */
-  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
+  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long,
+      matrix:Array_2[Int]) {
     var i:Long = len1;
     var j:Long = len2;
     var actions:Stack[Long] = new Stack[Long]();
@@ -343,13 +348,14 @@ public class SW_par {
     Console.OUT.printf("Gaps: %d/%d (%.2f%%)\n", numGaps, maxLen, gap);
     Console.OUT.println("Score: " + matrix(len1, len2));
     Console.OUT.println("1: " + align1);
-    Console.OUT.println("2: " + align2);
+    Console.OUT.println("2: " + align2);’
   }
 
   /**
    * Print function for debugging the build matrix.
    */
-  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
+  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long,
+      matrix:Array_2[Int]) {
     Console.OUT.println("  " + seq1);
     for (row in 0..len2) {
       var rowStr:String = new String();
