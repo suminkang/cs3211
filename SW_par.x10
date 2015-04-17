@@ -245,7 +245,6 @@ public class SW_par {
                                     matrix:Array_2[Int], mat_M:Array_2[Int], mat_I:Array_2[Int], mat_J:Array_2[Int],
                                     diag:ArrayList[Pair[Int, Int]], start:Int, nelems:Int) {
     for (i in start..(start + nelems - 1 as Int)) {
-    //async {
       val elem_p:Pair[Int, Int] = diag.get(i);
       val y:Int = elem_p.first + 1 as Int;
       val x:Int = elem_p.second + 1 as Int;
@@ -349,7 +348,7 @@ public class SW_par {
     Console.OUT.println("Score: " + matrix(len1, len2));
     Console.OUT.println("1: " + align1);
     Console.OUT.println("2: " + align2);
-    printMatrix(seq1, seq2, len1, len2, matrix);
+    //printMatrix(seq1, seq2, len1, len2, matrix);
   }
 
   /**

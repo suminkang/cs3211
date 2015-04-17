@@ -6,4 +6,6 @@ SW_seq.cc
 SW_seq.h
 SW_par.cc
 SW_par.h
-notworkingpar.x10
+SW_par*
+*.h
+*.cc
