@@ -77,9 +77,9 @@ public class SW_par {
       }
       reader.close();
 
-      var maxScore:Int = buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, 
-                            alphabet_to_index, sim_score_matrix, opening, extension);
-      backtrack(seq1, seq2, len1, len2, matrix, maxScore);
+      buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, 
+                  alphabet_to_index, sim_score_matrix, opening, extension);
+      backtrack(seq1, seq2, len1, len2, matrix);
     } else {
       Console.ERR.println("Usage: match file does not exist.");
       return;
@@ -136,7 +136,7 @@ public class SW_par {
    */
   public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, 
       height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], 
-      open:Int, extend:Int):Int {
+      open:Int, extend:Int) {
     val MAX_THREADS:Int = 8 as Int;
     val MIN_WORK_PER_THREAD:Int = 10 as Int;
 
@@ -171,7 +171,6 @@ public class SW_par {
   		mat_J(0, j) = -affineGap(open, extend, (j - 1) as Int);
 
     // Compute the matrix.
-    var max:Int = 0 as Int;
     var diagonals:Int = height + width - 1 as Int;
     var index:Int = 0 as Int;
     var amount:Int;
@@ -211,7 +210,6 @@ public class SW_par {
         }
       }
     }
-    return max;
   }
 
   /**
@@ -273,11 +271,10 @@ public class SW_par {
    * Finds the sequence alignment by traversing through the matrix from the bottom right, 
    * following the maximal values.
    */
-  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int], maxScore:Int) {
+  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
     var i:Long = len1;
     var j:Long = len2;
     var actions:Stack[Long] = new Stack[Long]();
-    var max:Int = 0 as Int;
 
     while (i != 0 || j != 0) {
       if (i == 0) {
@@ -294,28 +291,21 @@ public class SW_par {
       var left:Int = matrix(i-1,j);
       var up:Int = matrix(i,j-1);
 
-      var tmp:Int = 0 as Int;
       if (diag >= left && diag >= up) {
         // align
         i--;
         j--;
-        actions.push(0);
-        tmp = diag;
+        actions.push(0);        
       } else if (up > diag && up > left) {
         // delete (insert - in sequence 1)
         j--;
         actions.push(1);
-        tmp = up;
       } else if (left > diag && left >= up) {
         // insert - in sequence 2
         i--;
         actions.push(2);
-        tmp = left;
       }
 
-      if (max < tmp) {
-        max = tmp;
-      }
     }
 
     var align1:String = new String();
@@ -360,7 +350,7 @@ public class SW_par {
 
     Console.OUT.printf("Identity: %d/%d (%.2f%%)\n", numMatches, maxLen, identity);
     Console.OUT.printf("Gaps: %d/%d (%.2f%%)\n", numGaps, maxLen, gap);
-    Console.OUT.println("Score: " + max);
+    Console.OUT.println("Score: " + matrix(len1, len2));
     Console.OUT.println("1: " + align1);
     Console.OUT.println("2: " + align2);
   }
