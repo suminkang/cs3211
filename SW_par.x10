@@ -348,7 +348,7 @@ public class SW_par {
     Console.OUT.printf("Gaps: %d/%d (%.2f%%)\n", numGaps, maxLen, gap);
     Console.OUT.println("Score: " + matrix(len1, len2));
     Console.OUT.println("1: " + align1);
-    Console.OUT.println("2: " + align2);’
+    Console.OUT.println("2: " + align2);
   }
 
   /**
