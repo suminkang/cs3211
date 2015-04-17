@@ -152,11 +152,11 @@ public class SW_seq {
   var mat_J:Array_2[Int] = new Array_2[Int](width+1,height+1);
   mat_J(0,0) = -1000000 as Int;
   for (i in 1..width) {
-    mat_I(i, 0) = -1000000 as Int;
-    mat_I(i, 1) = -open;
+    mat_J(i, 0) = -1000000 as Int;
+    mat_J(i, 1) = -open;
   }
   for (j in 1..height)
-    mat_I(0, j) = -affineGap(open, extend, (j - 1) as Int);
+    mat_J(0, j) = -affineGap(open, extend, (j - 1) as Int);
   
   var max:Int = 0 as Int;
     var k:Int = 0 as Int;

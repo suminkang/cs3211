@@ -7,8 +7,6 @@ import x10.util.Pair;
 import x10.util.ArrayList;
 
 public class SW_par {
-
-
   public static def main(args:Rail[String]) {
     // ./sw s1.1 s2.1 BLOSUM62 10 5
     if (args.size < 5) {
@@ -79,9 +77,9 @@ public class SW_par {
       }
       reader.close();
 
-      var maxScore:Int = buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, 
-                            alphabet_to_index, sim_score_matrix, opening, extension);
-      backtrack(seq1, seq2, len1, len2, matrix, maxScore);
+      buildMatrix(seq1, seq2, matrix, len1 as Int, len2 as Int, 
+          alphabet_to_index, sim_score_matrix, opening, extension);
+      backtrack(seq1, seq2, len1, len2, matrix);
     } else {
       Console.ERR.println("Usage: match file does not exist.");
       return;
@@ -89,7 +87,7 @@ public class SW_par {
     return;
   }
 
-   /**
+  /**
    * Reads in the sequence from a file with fileName
    * Input files look like the following:
    *   >gi|2829193|gb|AF043946.1| ... ignore all this ...
@@ -116,19 +114,9 @@ public class SW_par {
     return seq;
   }
 
-  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
-    // Print out the matrix.
-    Console.OUT.println("  " + seq1);
-    for (row in 0..len2) {
-      var rowStr:String = new String();
-      rowStr = seq2.charAt(row as Int).toString() + " ";
-      for (col in 0..len1) {
-        rowStr = rowStr + " " + matrix(col,row);
-      }
-      Console.OUT.println(rowStr);
-    }
-  }
-
+  /**
+   * Calculate the affine gap score.
+   */
   public static def affineGap(open:Int, extend:Int, length:Int):Int {
     return open + (length * extend);
   }
@@ -147,10 +135,14 @@ public class SW_par {
    * Build the matrix by calculating the score using the Smith-Waterman algorithm.
    * MAX_THREADS and MIN_WORK_PER_THREAD are used to run the computation in parallel.
    */
-  public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int):Int {
-    val MAX_THREADS:Int = 4 as Int;
+  public static def buildMatrix(seq1:String, seq2:String, matrix:Array_2[Int], width:Int, 
+      height:Int, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], 
+      open:Int, extend:Int) {
+    val MAX_THREADS:Int = 8 as Int;
     val MIN_WORK_PER_THREAD:Int = 10 as Int;
-    
+
+    // mat_M(i,j) is the score of the best alignment up to the i-th letter in seq1 and
+    // j-th letter in seq2 where the two letters are aligned.
     var mat_M:Array_2[Int] = new Array_2[Int](width+1,height+1);
     for (i in 1..width)
       mat_M(i, 0) = -1000000 as Int;
@@ -166,6 +158,8 @@ public class SW_par {
   	for (i in 1..width)
   		mat_I(i, 0) = -affineGap(open, extend, (i - 1) as Int);
 
+    // mat_J(i,j) is the score of the best alignment up to the i-th letter in seq1 and
+    // j-th letter in seq2 where seq2 is aligned with a space.
   	var mat_J:Array_2[Int] = new Array_2[Int](width+1,height+1);
   	mat_J(0,0) = -1000000 as Int;
   	for (i in 1..width) {
@@ -175,6 +169,7 @@ public class SW_par {
   	for (j in 1..height)
   		mat_J(0, j) = -affineGap(open, extend, (j - 1) as Int);
 
+    // Compute the matrix.
     var max:Int = 0 as Int;
     var diagonals:Int = height + width - 1 as Int;
     var index:Int = 0 as Int;
@@ -182,14 +177,17 @@ public class SW_par {
     for (d in 0..(diagonals-1)) {
       var diag:ArrayList[Pair[Int, Int]] = generateDiagonal(d as Int, height, width);
       val num_potential_threads = diag.size() as Int / MIN_WORK_PER_THREAD;
-      if(num_potential_threads < 2) { // Special case: no threads.
+      if(num_potential_threads < 2) { 
+        // Special case: no threads.
         computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, 0 as Int, diag.size() as Int);
       } else {
-        if(num_potential_threads < MAX_THREADS) //Start potential amount of threads with minimum work each.
+        if(num_potential_threads < MAX_THREADS) {
+          //Start potential amount of threads with minimum work each.
           amount = MIN_WORK_PER_THREAD;
-        else //Start maximum number of threads with work divided evenly among them.
+        } else {
+          //Start maximum number of threads with work divided evenly among them.
           amount = diag.size() as Int / MAX_THREADS;
-          
+        }
           
         var z:Int = 0 as Int;
         var b:Int = ((diag.size() as Int) / amount);
@@ -198,7 +196,9 @@ public class SW_par {
         finish for(g in 0..(b-1)) {
           
           if (z == 0 as Int) {
-            if(diag.size() - index < amount * (2 as Int)) { //If there's less than twice the normal amount of work left, have this thread pick it all up.
+            if(diag.size() - index < amount * (2 as Int)) { 
+              // If there's less than twice the normal amount of work left, have this 
+              // thread pick it all up.
               async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix, open, extend, matrix, mat_M, mat_I, mat_J, diag, (g*amount) as Int, (diag.size() as Int - g*amount) as Int);
               //break;
               z = 1 as Int;
@@ -209,46 +209,36 @@ public class SW_par {
             //async { index += amount; }
           }
         }
-
-        
-        
-        
       }
-      
     }
-    return max;
   }
 
-/**
+  /**
    * Given the diagonal number, height, and width, return the list of pairs that represent
    * the indices of the elements in that specific diagonal.
    */
-public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[Pair[Int, Int]] {
+  public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[Pair[Int, Int]] {
     var elements:ArrayList[Pair[Int, Int]] = new ArrayList[Pair[Int, Int]]();
     val numDiags:Int = height + width - (1 as Int);
     
     if(diag < Math.min(height, width)) {
-      // Console.OUT.println("1");
       for (i in 0..diag)
         elements.add(new Pair[Int,Int]((diag - i) as Int, i as Int));
     } else if(diag >= Math.max(height, width)) {
-      // Console.OUT.println("2");
       var min:Int = Math.min(height, width);
       for(i in 0..(numDiags - diag - 1))
         elements.add(new Pair[Int, Int]((height -1 - i) as Int, (i + diag + 1 - height) as Int));
     } else if(diag < height && diag >= width) {
-      // Console.OUT.println("3");
       for (i in 0..(width - 1))
         elements.add(new Pair[Int,Int]((diag - i) as Int, i as Int));
     } else if(diag < width && diag >= height) {
-      // Console.OUT.println("4");
       for(i in 0..(height - 1))
         elements.add(new Pair[Int, Int]((height - 1 - i) as Int, (i + diag + 1 - height) as Int));
     }
     return elements;
   }
   
-   /**
+  /**
    * Use the three matrices to compute the score at the current diagonal index.
    */
   public static def computeDiagRange(seq1:String, seq2:String, alphabet_to_index:HashMap[Char, Int], sim_score_matrix:Array_2[Int], open:Int, extend:Int,
@@ -259,24 +249,17 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
       val elem_p:Pair[Int, Int] = diag.get(i);
       val y:Int = elem_p.first + 1 as Int;
       val x:Int = elem_p.second + 1 as Int;
-      //Console.OUT.println("(" + x + "," + y + ")");
 
-      // Top Left
       val xCharacterIndex = getCharacterIndex(seq1.charAt(x as Int), alphabet_to_index);
       val yCharacterIndex = getCharacterIndex(seq2.charAt(y as Int), alphabet_to_index);
       val sim:Int = sim_score_matrix(xCharacterIndex, yCharacterIndex);
-      //Console.OUT.println("Simi (" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + ") = " + sim);
-      //Console.OUT.println("(" + seq1.charAt(x as Int) + "," + seq2.charAt(y as Int) + "     generateDiagonals(d, height, width);): (" + xCharacterIndex + "," + yCharacterIndex + ")");
 
       mat_M(x, y) = Math.max(Math.max(mat_M(x-1, y-1) + sim, mat_I(x-1, y-1) + sim), mat_J(x-1, y-1) + sim);
       mat_I(x, y) = Math.max(mat_M(x-1, y) - open, mat_I(x-1, y) - extend);
       mat_J(x, y) = Math.max(mat_M(x, y-1) - open, mat_J(x, y-1) - extend);
 
+      // Take the maximum of the three matrices and 0.
       matrix(x,y) = Math.max(Math.max(Math.max(mat_M(x,y), mat_I(x,y)), mat_J(x,y)), 0 as Int);
-      /*if (max < matrix(x,y)) {
-        max = matrix(x,y);
-      }*/
-    //}
     }
   }
 
@@ -284,7 +267,7 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
    * Finds the sequence alignment by traversing through the matrix from the bottom right, 
    * following the maximal values.
    */
-  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int], maxScore:Int) {
+  public static def backtrack(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
     var i:Long = len1;
     var j:Long = len2;
     var actions:Stack[Long] = new Stack[Long]();
@@ -331,7 +314,6 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
 
     while(!actions.isEmpty()) {
       var action:Long = actions.pop();
-      //Console.OUT.println("ACTION: " + action);
       if (action == 0) {
         // Check for matches
         var s1char:Char = seq1.charAt(s1Index);
@@ -364,8 +346,24 @@ public static def generateDiagonal(diag:Int, height:Int, width:Int): ArrayList[P
 
     Console.OUT.printf("Identity: %d/%d (%.2f%%)\n", numMatches, maxLen, identity);
     Console.OUT.printf("Gaps: %d/%d (%.2f%%)\n", numGaps, maxLen, gap);
-    Console.OUT.println("Score: " + maxScore);
+    Console.OUT.println("Score: " + matrix(len1, len2));
     Console.OUT.println("1: " + align1);
     Console.OUT.println("2: " + align2);
+    printMatrix(seq1, seq2, len1, len2, matrix);
+  }
+
+  /**
+   * Print function for debugging the build matrix.
+   */
+  public static def printMatrix(seq1:String, seq2:String, len1:Long, len2:Long, matrix:Array_2[Int]) {
+    Console.OUT.println("  " + seq1);
+    for (row in 0..len2) {
+      var rowStr:String = new String();
+      rowStr = seq2.charAt(row as Int).toString() + " ";
+      for (col in 0..len1) {
+        rowStr = rowStr + " " + matrix(col,row);
+      }
+      Console.OUT.println(rowStr);
+    }
   }
 }
