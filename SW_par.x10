@@ -192,7 +192,7 @@ public class SW_par {
 
         var b:Int = ((diag.size() as Int) / amount);
         finish for(g in 0..(b-1)) {
-          if(diag.size() - (g * amount) < amount * (2 as Int)) {
+          if (diag.size() - (g * amount) < amount * (2 as Int)) {
             // If there's less than twice the normal amount of work left, have this
             // thread pick it all up.
             async computeDiagRange(seq1, seq2, alphabet_to_index, sim_score_matrix,
